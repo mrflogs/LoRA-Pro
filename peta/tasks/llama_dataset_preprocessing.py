@@ -146,7 +146,7 @@ class MetaMathQA100k_Preprocessor(DatasetPreprocessor):
             ]
             for i, l in enumerate(input_text_length):
                 labels[i, :l] = -100
-            labels[encodings["attention_mask"] == self.tokenizer.pad_token_id] = -100
+            labels[encodings["attention_mask"] == 0] = -100
             
             results = {
                 "input_ids": encodings["input_ids"],
@@ -246,7 +246,7 @@ class CodeFeedback100k_Preprocessor(DatasetPreprocessor):
             ]
             for i, l in enumerate(input_text_length):
                 labels[i, :l] = -100
-            labels[encodings["attention_mask"] == self.tokenizer.pad_token_id] = -100
+            labels[encodings["attention_mask"] == 0] = -100
             
             results = {
                 "input_ids": encodings["input_ids"],
