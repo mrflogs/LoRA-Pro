@@ -165,7 +165,8 @@ def main():
         for batch in t:
 
             outputs = model.generate(
-                batch["input_ids"].to(model.device),
+                input_ids=batch["input_ids"].to(model.device),
+                attention_mask=batch["attention_mask"].to(model.device), # ！important
                 return_dict_in_generate=True,
                 output_scores=False,
                 max_new_tokens=512,
