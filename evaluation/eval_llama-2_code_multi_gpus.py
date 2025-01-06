@@ -150,7 +150,8 @@ def main():
             t = tqdm(dataloader) if dist.get_rank() == 0 else dataloader
             for batch in t:
                 outputs = model.generate(
-                    batch["input_ids"].to(model.device),
+                    input_ids=batch["input_ids"].to(model.device),
+                    attention_mask=batch["attention_mask"].to(model.device),
                     return_dict_in_generate=True,
                     output_scores=False,
                     max_new_tokens=512,
