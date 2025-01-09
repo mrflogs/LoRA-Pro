@@ -159,7 +159,8 @@ def main():
                     top_p=0.95,
                     temperature=0.8,
                 )
-                predictions = tokenizer.batch_decode([o.split('### Response:\n```python\n')[-1].strip() for o in outputs], skip_special_tokens=True)
+                predictions = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+                predictions = [o.split('### Response:\n```python\n')[-1].strip() for o in predictions ]
                 pred = []
                 for pred_text in predictions:
                     pred.append(post_process(pred_text))
