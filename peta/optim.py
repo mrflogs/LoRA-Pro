@@ -296,11 +296,11 @@ class AdamW(Optimizer):
                     # computing the inverse matrix
                     AA_T = A @ A.T
                     B_TB = B.T @ B
-                    AA_T_inv = torch.linalg.pinv(AA_T + delta * torch.eye(A.shape[0]).to(A.device)) 
-                    B_TB_inv = torch.linalg.pinv(B_TB + delta * torch.eye(A.shape[0]).to(A.device)) 
+                    AA_T_inv = torch.linalg.pinv(AA_T + delta * torch.eye(AA_T.shape[0], dtype=AA_T.dtype, device=AA_T.device)) 
+                    B_TB_inv = torch.linalg.pinv(B_TB + delta * torch.eye(B_TB.shape[0], dtype=B_TB.dtype, device=B_TB.device)) 
    
                     grad_A = (1 / scaling_factor ** 2) * B_TB_inv @ grad_A_orin 
-                    grad_B = (1 / scaling_factor ** 2) * ((torch.eye(B.shape[0]).to(B.device) - B @ B_TB_inv @ B.T) @ grad_B_orin @ AA_T_inv) 
+                    grad_B = (1 / scaling_factor ** 2) * ((torch.eye(B.shape[0], dtype=B.dtype, device=B.device) - B @ B_TB_inv @ B.T) @ grad_B_orin @ AA_T_inv) 
                     equiv_grad = scaling_factor * B @ grad_A + scaling_factor * grad_B @ A
     
                     grad = equiv_grad
@@ -350,19 +350,19 @@ class AdamW(Optimizer):
                     grad_A_orin = scaling_factor * B.T @ g
                     grad_B_orin = scaling_factor * g @ A.T
                     
-                    AA_T_inv = torch.linalg.pinv(AA_T + delta * torch.eye(A.shape[0]).to(A.device))
-                    B_TB_inv = torch.linalg.pinv(B_TB + delta * torch.eye(A.shape[0]).to(A.device))  
+                    AA_T_inv = torch.linalg.pinv(AA_T + delta * torch.eye(AA_T.shape[0], dtype=AA_T.dtype, device=AA_T.device))
+                    B_TB_inv = torch.linalg.pinv(B_TB + delta * torch.eye(B_TB.shape[0], dtype=B_TB.dtype, device=B_TB.device))  
 
                     if group['X_mode'] == "sylvester":
                         X = solve_sylvester(B.T @ B, A @ A.T, -(1 / scaling_factor ** 2) * B_TB_inv @ grad_A_orin @ A.T)
                     elif group['X_mode'] == "symmetry":
                         X = -0.5 * (1 / scaling_factor ** 2) * B_TB_inv @ B.T @ grad_B_orin @ AA_T # symmetry
                     else:
-                        X = torch.zeros((B_TB_inv.shape[0], B_TB_inv.shape[0])).to(B.device)
-                    X = torch.tensor(X).to(B.device).to(B.dtype)
+                        X = torch.zeros_like(B_TB_inv)
+                    X = X.to(B)
     
                     grad_A = (1 / scaling_factor ** 2) * B_TB_inv @ grad_A_orin + X @ A
-                    grad_B = (1 / scaling_factor ** 2) * ((torch.eye(B.shape[0]).to(B.device) - B @ B_TB_inv @ B.T) @ grad_B_orin @ AA_T_inv) - B @ X
+                    grad_B = (1 / scaling_factor ** 2) * ((torch.eye(B.shape[0], dtype=B.dtype, device=B.device) - B @ B_TB_inv @ B.T) @ grad_B_orin @ AA_T_inv) - B @ X
                 
                     if group['weight_decay'] != 0:
                         B.mul_(math.sqrt(1 - group["weight_decay"] * group["lr"]))
@@ -445,19 +445,19 @@ class AdamW(Optimizer):
                     # computing the inverse matrix
                     AA_T = A @ A.T
                     B_TB = B.T @ B
-                    AA_T_inv = torch.linalg.pinv(AA_T + delta * torch.eye(A.shape[0]).to(A.device)) 
-                    B_TB_inv = torch.linalg.pinv(B_TB + delta * torch.eye(A.shape[0]).to(A.device))
+                    AA_T_inv = torch.linalg.pinv(AA_T + delta * torch.eye(AA_T.shape[0], dtype=AA_T.dtype, device=AA_T.device)) 
+                    B_TB_inv = torch.linalg.pinv(B_TB + delta * torch.eye(B_TB.shape[0], dtype=B_TB.dtype, device=B_TB.device))
    
                     if group['X_mode'] == "sylvester":
                         X = solve_sylvester(B.T @ B, A @ A.T, -(1 / scaling_factor ** 2) * B_TB_inv @ grad_A_orin @ A.T)
                     elif group['X_mode'] == "symmetry":
                         X = -0.5 * (1 / scaling_factor ** 2) * B_TB_inv @ B.T @ grad_B_orin @ AA_T # symmetry
                     else:
-                        X = torch.zeros((B_TB_inv.shape[0], B_TB_inv.shape[0])).to(B.device)
-                    X = torch.tensor(X).to(B.device).to(B.dtype)
+                        X = torch.zeros_like(B_TB_inv)
+                    X = X.to(B)
     
                     grad_A = (1 / scaling_factor ** 2) * B_TB_inv @ grad_A_orin + X @ A
-                    grad_B = (1 / scaling_factor ** 2) * ((torch.eye(B.shape[0]).to(B.device) - B @ B_TB_inv @ B.T) @ grad_B_orin @ AA_T_inv) - B @ X
+                    grad_B = (1 / scaling_factor ** 2) * ((torch.eye(B.shape[0], dtype=B.dtype, device=B.device) - B @ B_TB_inv @ B.T) @ grad_B_orin @ AA_T_inv) - B @ X
                     
                     exp_avg_A = state["exp_avg_A"]
                     exp_avg_sq_A = state["exp_avg_sq_A"]
@@ -654,19 +654,19 @@ class SGD(Optimizer):
                     # computing the inverse matrix
                     AA_T = A @ A.T
                     B_TB = B.T @ B
-                    AA_T_inv = torch.linalg.pinv(AA_T + delta * torch.eye(A.shape[0]).to(A.device)) 
-                    B_TB_inv = torch.linalg.pinv(B_TB + delta * torch.eye(A.shape[0]).to(A.device)) 
+                    AA_T_inv = torch.linalg.pinv(AA_T + delta * torch.eye(AA_T.shape[0], dtype=AA_T.dtype, device=AA_T.device)) 
+                    B_TB_inv = torch.linalg.pinv(B_TB + delta * torch.eye(B_TB.shape[0], dtype=B_TB.dtype, device=B_TB.device)) 
    
                     if group['X_mode'] == "sylvester":
                         X = solve_sylvester(B.T @ B, A @ A.T, -(1 / scaling_factor ** 2) * B_TB_inv @ grad_A_orin @ A.T)
                     elif group['X_mode'] == "symmetry":
                         X = -0.5 * (1 / scaling_factor ** 2) * B_TB_inv @ B.T @ grad_B_orin @ AA_T # symmetry
                     else:
-                        X = torch.zeros((B_TB_inv.shape[0], B_TB_inv.shape[0])).to(B.device)
-                    X = torch.tensor(X).to(B.device).to(B.dtype)
+                        X = torch.zeros_like(B_TB_inv)
+                    X = X.to(B)
 
                     grad_A = (1 / scaling_factor ** 2) * B_TB_inv @ grad_A_orin + X @ A
-                    grad_B = (1 / scaling_factor ** 2) * ((torch.eye(B.shape[0]).to(B.device) - B @ B_TB_inv @ B.T) @ grad_B_orin @ AA_T_inv) - B @ X
+                    grad_B = (1 / scaling_factor ** 2) * ((torch.eye(B.shape[0], dtype=B.dtype, device=B.device) - B @ B_TB_inv @ B.T) @ grad_B_orin @ AA_T_inv) - B @ X
                     step_size = group['lr'] 
 
                     param_list[0].add_(grad_A, alpha=-step_size)
