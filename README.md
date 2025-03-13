@@ -1,6 +1,6 @@
 # LoRA-Pro: Are Low-Rank Adapters Properly Optimized?
 
-This repo contains the pre-release version of LoRA-Pro, proposed by [LoRA-Pro: Are Low-Rank Adapters Properly Optimized?](https://arxiv.org/abs/2407.18242).
+This repo contains the pre-release version of LoRA-Pro, proposed by [LoRA-Pro: Are Low-Rank Adapters Properly Optimized?](https://openreview.net/forum?id=gTwRMU3lJ5).
 
 In LoRA-Pro, we uncover a fundamental connection between the optimization processes of LoRA and full fine-tuning: using LoRA for optimization is mathematically equivalent to full fine-tuning using a low-rank gradient for parameter updates. And this low-rank gradient can be expressed in terms of the gradients of the two low-rank matrices in LoRA. Leveraging this insight, we introduce LoRA-Pro, a method that enhances LoRA's performance by strategically adjusting the gradients of these low-rank matrices. This adjustment allows the low-rank gradient to more accurately approximate the full fine-tuning gradient, thereby narrowing the performance gap between LoRA and full fine-tuning. Furthermore, we theoretically derive the optimal solutions for adjusting the gradients of the low-rank matrices, applying them during fine-tuning in LoRA-Pro.
 
@@ -37,42 +37,23 @@ Install datasets (WizardLM, MetaMathQA, and CodeFeedback-Filtered-Instruction, e
 
 ### Example
 
-#### 0. Configure custom trainer with lora-pro optimizer
+In LoRA-Pro, to ensure compatibility with DeepSpeed, we've integrated the Adam optimization process directly into DeepSpeed (in `DeepSpeed-0.15.1/deepspeed/runtime/zero/stage_1_and_2.py`). Therefore, in the TrainingArguments, **you need to set the optimizer to "sgd" to prevent parameters from being updated twice.**
+
+#### 0. Training 
 
 ```python
-import peft
-import peta
-from transformers import TrainingArguments, Trainer 
+# Define your LoRA
 
-# Configure custom trainer with lora-pro optimizer
-class CustomTrainer(Trainer):
-    def __init__(self, *args, scaling_factor=2, **kwargs):
-        super().__init__(*args, **kwargs)
 
-        self.scaling_factor = scaling_factor
-        self.lora_modules = []
-        self.find_modules(self.model, self.lora_modules)
+# Define TrainingArguments, keep optim as "sgd" here.
+train_args = TrainingArguments(
+	...,
+    optim="sgd",
+	...,
+)
 
-    def find_modules(self, module ,lora_modules):
-        for sub_module in module.children():
-            if isinstance(sub_module, peft.tuners.lora.layer.Linear):
-                lora_modules.append(sub_module)
-            elif list(sub_module.children()):
-                self.find_modules(sub_module, lora_modules)
-        
-    def create_optimizer_and_scheduler(self, num_training_steps: int):
-        self.optimizer = peta.optim.AdamW(self.model.named_parameters(), lr=self.args.learning_rate, scaling_factor=self.scaling_factor, betas=(0.9, 0.999), weight_decay=self.args.weight_decay, mode="efficient", X_mode='sylvester')
-        
-        self.create_scheduler(num_training_steps=num_training_steps, optimizer=self.optimizer)
-
-```
-
-#### 1. Training 
-
-```
 # LoRA-Pro Trainer
-trainer = CustomTrainer(
-    scaling_factor=(lora_config.lora_alpha / lora_config.r),
+trainer = Trainer(
     model=model,
     train_dataset=datasets["train"],
     eval_dataset=datasets["eval"],
@@ -124,10 +105,6 @@ torchrun --nproc_per_node=8 evaluation/eval_llama-2_code_multi_gpus.py
 ```
 
 For chat task, we use [FastChat](https://github.com/lm-sys/FastChat/tree/main) to generation and evaluate with GPT-4, please read their instruction.
-
-
-
-## Acknowledgement
 
 
 
